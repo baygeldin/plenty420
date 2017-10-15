@@ -1,13 +1,14 @@
 const winston = require('winston')
 const cheerio = require('cheerio')
-const request = require('request')
+const needle = require('needle')
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const TeleBot = require('telebot')
 
+const home = 'http://www.spbbong.com'
 const token = '470996714:AAGwXcJV8-qVyY6nj4w1q7_taWZSi7nMv3M'
 const passphrase = 'snoopdogg'
-const interval = 1000
+const interval = 10000
 
 const logger = winston.createLogger({
   transports: [new winston.transports.File({ filename: 'prod.log' })]
@@ -61,14 +62,30 @@ bot.on('text', (msg) => {
 })
 
 setInterval(function(){
-  request('http://www.spbbong.com/rabotaem_v_minus', (err, res, html) => {
+  needle.get(`${home}/rabotaem_v_minus`, (err, res) => {
     if (!err && res.statusCode == 200) {
-      let $ = cheerio.load(html)
-      $('.vminus .info2').each((i, elem) => {
-        let deal = $(elem)
-        let name = deal.find('.name').text()
-        let description = deal.find('p').text()
-      })
+      //let $ = cheerio.load(iconv.convert(html))
+      let $ = cheerio.load(res.body)
+      let deal = $('.vminus').first()
+      let info = deal.find('.info2')
+      let meta = deal.find('.actiondet')
+      let name = info.find('.name').text()
+      let description = info.find('p').text()
+      let image = info.find('img').attr('src')
+      let oldPrice = meta.find('.oldpricediv').text()
+      let newPrice = meta.find('.pricediv').text()
+
+      if (db.get('last').value() !== name) {
+        caption = `Check out the new deal! ${name} for ${newPrice} instead of ${oldPrice}:\n\n${description}`
+        db.get('users').value().forEach((u) => {
+          if (image) {
+            bot.sendPhoto(u.id, `${home}${image}`, { caption })
+          } else {
+            bot.sendMessage(u.id, caption)
+          }
+        })
+        db.set('last', name).write()
+      }
     } else {
       throw err
     }
