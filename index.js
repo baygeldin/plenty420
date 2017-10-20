@@ -1,15 +1,18 @@
 const winston = require('winston')
 const cheerio = require('cheerio')
 const needle = require('needle')
+const moment = require('moment-timezone')
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const TeleBot = require('telebot')
 
-const home = 'http://www.spbbong.com'
-const sale = `${home}/rabotaem_v_minus`
 const token = '470996714:AAGwXcJV8-qVyY6nj4w1q7_taWZSi7nMv3M'
 const passphrase = 'snoopdogg'
 const interval = 10000
+
+const home = 'http://www.spbbong.com'
+const sale = `${home}/rabotaem_v_minus`
+const openHours = [8, 21]
 
 const logger = winston.createLogger({
   transports: [new winston.transports.File({ filename: 'prod.log' })]
@@ -69,6 +72,9 @@ bot.on('text', (msg) => {
 })
 
 setInterval(function(){
+  let hours = moment().tz("Europe/Moscow").hours()
+  if (hours < openHours[0] || hours >= openHours[1]) return
+
   needle.get(sale, (err, res) => {
     if (!err && res.statusCode == 200) {
       let $ = cheerio.load(res.body)
