@@ -12,7 +12,7 @@ const interval = 10000
 
 const home = 'http://www.spbbong.com'
 const sale = `${home}/rabotaem_v_minus`
-const openHours = [8, 21]
+const openHours = [11, 21]
 
 const logger = winston.createLogger({
   transports: [new winston.transports.File({ filename: 'prod.log' })]
